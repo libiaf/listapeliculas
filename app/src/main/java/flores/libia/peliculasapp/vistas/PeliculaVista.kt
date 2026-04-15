@@ -8,20 +8,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import flores.libia.peliculasapp.modelos.Pelicula
-import flores.libia.peliculasapp.modelos.Usuario
 import flores.libia.peliculasapp.viewmodels.PeliculaViewModel
-import flores.libia.peliculasapp.viewmodels.UsuarioViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PeliculaScreen(viewModel: PeliculaViewModel){
     val peliculas = viewModel.peliculas.value
-    Scaffold() {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("Catálogo de Películas")
+                }
+            )
+        }
+    ) {
             padding ->
         LazyColumn(
             modifier = Modifier
