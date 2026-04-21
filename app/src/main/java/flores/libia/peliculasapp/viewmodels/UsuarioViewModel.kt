@@ -3,6 +3,7 @@ package flores.libia.peliculasapp.viewmodels
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import flores.libia.peliculasapp.R
 import flores.libia.peliculasapp.modelos.Repositorio
 import flores.libia.peliculasapp.modelos.Usuario
 
@@ -19,4 +20,20 @@ class UsuarioViewModel(val repo: Repositorio) : ViewModel() {
         _usuarios.value = repo.getUsuarios()
 
     }
+
+    fun agregarUsuario(nombre: String, correo: String, edad: Int, fotoUri: String?){
+        val nuevoId = usuarios.value.size + 1
+        val usu = Usuario(nuevoId, nombre, correo, edad, R.drawable.mujer, fotoUri)
+        repo.agregarUsuario(usu)
+
+        _usuarios.value = repo.getUsuarios()
+
+    }
+
+    fun eliminarUsuario(usuario: Usuario){
+        repo.eliminarUsuario(usuario)
+        _usuarios.value = repo.getUsuarios()
+    }
+
+
 }
