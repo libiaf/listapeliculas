@@ -22,4 +22,12 @@ class Repositorio {
     fun eliminarUsuario(usuario: Usuario){
         usuarios.remove(usuario)
     }
+
+    fun editarUsuario(usuario: Usuario){
+        val indice = usuarios.indexOfFirst { it.id == usuario.id }
+
+        if (indice != -1) {
+            usuarios[indice] = usuario
+        }
+    }
 }

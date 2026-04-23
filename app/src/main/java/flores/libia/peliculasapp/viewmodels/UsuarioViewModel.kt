@@ -35,5 +35,11 @@ class UsuarioViewModel(val repo: Repositorio) : ViewModel() {
         _usuarios.value = repo.getUsuarios()
     }
 
+    fun editarUsuario(id: Int, nombre: String, correo: String, edad: Int, fotoUri: String?){
+        val usu = Usuario(id, nombre, correo, edad, R.drawable.mujer, fotoUri)
+        repo.editarUsuario(usu)
+        _usuarios.value = repo.getUsuarios()
+    }
+
 
 }

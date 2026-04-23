@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -62,6 +63,8 @@ fun UsuarioScreen(viewModel: UsuarioViewModel){
     val usuarios = viewModel.usuarios.value
 
     var mostrarDialogo by remember {mutableStateOf(false)  }
+    var usuarioEditar by remember { mutableStateOf<Usuario?>(null) }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -87,29 +90,46 @@ fun UsuarioScreen(viewModel: UsuarioViewModel){
         ) {
 
             items(usuarios){ usuario ->
-                UsuarioCard(usuario)
+                UsuarioCard(usuario, onLongClick = {
+                    usuarioEditar = usuario
+                } )
                 Spacer(modifier = Modifier.height(8.dp))
 
             }
         }
 
-    }
+        if(mostrarDialogo){
+            AgregarUsuarioDialog(
+                onDismiss = { mostrarDialogo = false },
+                onConfirm = { nombre, correo, edad, fotoUri->
+                    viewModel.agregarUsuario(nombre, correo, edad, fotoUri)
+                    mostrarDialogo = false
+                }
+            )
+        }
 
-    if(mostrarDialogo){
-        AgregarUsuarioDialog(
-            onDismiss = { mostrarDialogo = false },
-            onConfirm = { nombre, correo, edad, fotoUri->
-                viewModel.agregarUsuario(nombre, correo, edad, fotoUri)
-                mostrarDialogo = false
-            }
-        )
+        usuarioEditar?.let {usuario ->
+            EditarUsuarioDialog(
+                usuario = usuario,
+                onDismiss = {usuarioEditar = null},
+                onConfirm = {id, nombre, correo, edad, fotoUri ->
+                    viewModel.editarUsuario(id, nombre, correo, edad, fotoUri)
+                    usuarioEditar = null
+                }
+            )
+//            Toast.makeText(context, "${usuario.nombre}", Toast.LENGTH_SHORT).show()
+        }
     }
 }
 
 @Composable
-fun UsuarioCard(usuario: Usuario){
+fun UsuarioCard(usuario: Usuario, onLongClick: () -> Unit){
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth()
+            .combinedClickable(
+                onClick = {},
+                onLongClick = onLongClick
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -218,6 +238,109 @@ fun AgregarUsuarioDialog(
                 }
             ) {
                 Text("Agregar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+
+
+    )
+}
+
+
+
+@Composable
+fun EditarUsuarioDialog(
+    usuario: Usuario,
+    onDismiss: () -> Unit,
+    onConfirm: (Int, String, String, Int, String?) -> Unit
+){
+//    var img: Uri? = null
+//    if (usuario.fotoUri != null) {
+//        img = Uri.parse(usuario.fotoUri)
+//    }
+    var foto by remember { mutableStateOf<Uri?>(usuario.fotoUri?.let {Uri.parse(it)}) }
+    var nombre by remember { mutableStateOf(usuario.nombre) }
+    var correo by remember { mutableStateOf(usuario.correo) }
+    var edad by remember { mutableStateOf(usuario.edad.toString()) }
+
+    var launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        foto = uri
+
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {Text("Editar Usuario")},
+        text = {
+            Column {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray)
+                        .clickable{
+                            launcher.launch("image/*")
+                        }
+                ){
+                    if (foto != null){
+                        AsyncImage(
+                            model = foto,
+                            contentDescription = "Avatar",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.AccountBox,
+                            contentDescription = "Avatar",
+                            modifier = Modifier.size(48.dp)
+
+                        )
+                    }
+                }
+                OutlinedTextField(
+                    value = nombre,
+                    onValueChange = { nombre = it},
+                    label = { Text("Nombre") },
+                    singleLine = true
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = correo,
+                    onValueChange = { correo = it },
+                    label = { Text("Correo") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = edad,
+                    onValueChange = { edad = it },
+                    label = { Text("Edad") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val edadInt = edad.toIntOrNull() ?: 0
+                    if (nombre.isNotBlank() && correo.isNotBlank() && edadInt > 0) {
+                        onConfirm(usuario.id, nombre, correo, edadInt, foto?.toString())
+                    }
+                }
+            ) {
+                Text("Editar")
             }
         },
         dismissButton = {
